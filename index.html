@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+
+  
+  <title>Hexo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta property="og:type" content="website">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="http://yoursite.com/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:locale" content="default">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hexo">
+  
+    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hexo</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main">
+  
+    <article id="post-IPFS" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/06/13/IPFS/" class="article-date">
+  <time datetime="2018-06-13T01:55:51.078Z" itemprop="datePublished">2018-06-13</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>开始读paper，顺手翻译下。不逐字翻译。</p>
+<p>《IPFS：基于内容寻址和版本管理的P2P文件系统》</p>
+<p>#1 摘要<br>    IPFS是一个分布式文件系统，希望用同一套文件系统连接所有设备。IPFS有些类似互联网，但它更像是一个独立的BT集群，在同一个Git Repo内交换文件。换句话说，IPFS提供一个高吞吐的、基于内容寻址的、块存储模型，使用基于内容寻址的超链接。这个模型使用一个一般化的MerkleDAG，这是一种数据结构，能够构建带版本管理的文件系统，区块链，甚至是一个永久的互联网。IPFS结合了一个分布式哈希表，一个带激励的文件块交换机制，一个自说明（自证明？）的名字空间。IPFS没有单点失效问题，所有节点均不信任所有节点。</p>
+<p>#INTRO<br>    除了AFS，全球性的分布式文件系统没有成功的。倒是P2P很兴盛，但那不是基础设施。也许这是因为一个“足够好”的文件系统已经存在了：那就是HTTP。它成为了互联网上传输文件的事实方式。但是它并没有吸收过去15年内分布式开发产生的优秀之处。比如，演进web设施几乎是不可能的，因为存在大量向后兼容的限制。<br>    很多分布式文件系统开始借鉴git。IPFS也是这样，它的原则就是把所有数据作为一个MerkeDAG来建模。</p>
+<p>#2 背景</p>
+<p>##分布式哈希表<br>DHT广泛被用于在p2p系统中维护和协调metadata。</p>
+<p>##BitTorrent<br>BT的一些关键特性启发了IPFS的设计：</p>
+<pre><code>- BT的数据交换协议使用“准针锋相对”的策略，对正外部性的节点奖励，对负外部性的节点惩罚。
+- BT peer会追踪文件块的可用性，以高优先级发送稀缺的块。这使得非种子节点间也可以彼此交换数据。
+- （没看懂）BT默认的准争锋相对策略对一些剥削性的带宽分享策略抵抗力较差。（猜测是说有的peer通过某种策略占便宜，BT的默认策略不能很好的应对这种情况）PropShare是一个这方面抗性较好的策略，而且整体吞吐更好。
+</code></pre><p>##Git<br>Git提供了一种强大的MerkleDAG模型来以对分布式友好的方式捕捉文件系统树的变化。<br>1）用不可变的obj表示文件（blob），目录（tree），和变动（commit）。<br>2）obj是基于内容寻址的，地址是内容的密码学hash。<br>3）对其他obj的link是嵌入式的，于是形成了一个MerkleDAG。者提供了很多有用的完整性和工作流属性（？）<br>4）多数用于表示版本的metada（分支，tag等），都是指针，因此创建和更新它们的成本都很低。<br>5）修改版本只需要更新指针，或者增加obj。<br>6）向其他用户传播版本更新只需要传递obj，更新远端的指针。</p>
+<p>##自验证的文件系统-SFS<br>使用这样的schema来给远程的文件系统建立地址：<br>/sfs/<location>:<hostid><br>Location是server的网络地址，HostID=hash(publickey || Location)<br>所以SFS文件系统的名字就验证了它的地址。所有的SFS实例共享一个全局的名字空间，名字是基于密码学的，而且网络流量不需要任何中心化的实体来做路由。</hostid></location></p>
+<p>#3 IPFS 设计<br>IPFS集合了之前P2P系统的成功设计，包括DHT，BT，Git，SFS。IPFS是P2P的，没有哪个节点具有特权。IPFS协议由若干子协议构成，分别具有不同的功能：<br>1）身份识别：管理节点的身份生成和验证。<br>2）网络：管理到其他peer的连接，底层使用了不同的网络协议。可以配置。<br>3）路由：维护用于定位特定peer和obj的信息。对来自远程和本地的查询都会作出反应。默认使用DHT，但可以改成别的。<br>4）交换：使用一种新型的快交换协议：BitSwap，建模为一个市场，弱化了数据复制。贸易策略可交换//没懂<br>5）Objects：基于内容寻址的MerkleDAG、不可变的Obj、带有link。可以用来实现任意的数据结构。<br>6）文件：由Git启发，带有版本管理的文件系统。<br>7）命名：自验证的、可变的名字系统。</p>
+<p>#3.1 身份<br>节点由NodeId标明其身份，NodeId是其公钥的hash，使用S/Kademlia的静态密码puzzle创建。节点会存储其公私钥。用户可以每次都新建一个节点，但是这样会丢失保持稳定名字所能积累的好处。系统鼓励名字保持稳定。<br>关于加密函数：IPFS不想把系统绑定到某个具体加密函数上，而是喜欢自说明的方式。哈希摘要以多重哈希的格式存储，比如：<function code=""><digest length=""><digest bytes=""><br>这样，系统可以a）根据use case决定使用最佳的函数（更强的安全，或是更好的性能），b）易于演化。</digest></digest></function></p>
+<p>3.2 网络<br>包括以下技术栈：</p>
+<pre><code>- 传输：可以使用任何传输协议，最好是WebRTC或者uTP
+- 可靠性：如果底层协议不提供可靠性，那么IPFS自己可以提供可靠性
+- 联通性：使用ICE NAT技术
+- 完整性：可选的，用hash校验和检查message的完整性
+- 真实性：可选的，用发送者的公钥进行验证
+</code></pre><p>3.2.1关于Peer地址<br>IPFS可以使用任何网络；并不假设一定可以依据IP进行访问。IPFS使用multiaddr格式来记录使用的网络。multiaddr能够表达地址和地址所用协议，而且可以嵌套。比如：</p>
+<blockquote>
+<p>//an SCTP/IPv4 connection<br>/ip4/10.20.30.40/sctp/1234/</p>
+</blockquote>
+<blockquote>
+<p>//an SCTP/IPv4 connection proxied over TCP/IPv4/<br>ip4/5.6.7.8/tcp/5678/ip4/1.2.3.4/sctp/1234/</p>
+</blockquote>
+<p>##3.3路由<br>IPFS节点需要一个路由系统，能够a）找到其他peer的网络地址b）能够对某个特定obj提供服务的peer。IPFS使用DSHT来实现这一点。UPFS DHT根据obj的大小来决定分发方式。小于1KB的值直接存在DHT里。大于1KB的，DHT存放引用，即能够提供某个block的NodesId列表。</p>
+<p>##3.4 块交换 - BitSwap协议<br>BitSwap peer有一个自己想要的block列表（want list），以及一个自己拥有的可供交换的block列表（have list）。和BT不同，BS并不仅限于一个种子。BS相当于一个永久性的市场，节点可以交换blocks，无论这些block属于什么文件。block可以属于完全不同的文件。<br>一个市场意味着一种虚拟货币的存在，这就需要一个全局的账本。<br>当进行交换的两个节点是互补的时候，是最理想的。但是，这不经常发生。很多时候，节点必须为了自己想要的block而工作。如果一个节点不持有任何它的peer想要的（或者它刚初始化，啥都没有），它会去寻找它的peer想要的block，但是这个行为比它自己想要的优先级低。这鼓励节点去缓存和传播那些稀有的blocks，哪怕它们自己完全不感兴趣。</p>
+<p>###3.4.1 BitSwap信用<br>这个协议还鼓励节点去做种子，哪怕它们自己什么都不需要。于是，节点向他们的peer乐观的发送blocks，期望对方予以回报。但是必须提防leeches。用一个简单的信用系统解决这个问题：<br>1）peers跟踪记录它们和其他节点间的进出数据量balance。<br>2）peer向债务人节点发送block的动作是概率性的，而且随着债务量增加，概率逐渐降低。<br>如果一个节点决定不向它的peer发送数据时，它会在ignore_cooldown时间内不发送。这避免如果对方通过制造更多请求来加大概率。</p>
+<p>###3.4.2 BitSwap策略<br>目标是：<br>1）最大化整个网络的性能<br>2）避免freeloader<br>3）对未知的策略进行抵抗<br>4）对可信任节点宽容<br>一个实践中的策略是sigmoid函数，由负债率scale：<br>让一个节点和他的peer间的负债率r为<br>r =bytes_sent/bytes_recv +1<br>给定r，让发送给债务人的概率为</p>
+<p>负债率是一个对信任度的度量。让之前曾经交换过数据的peer间对彼此宽容，对未知节点和未获信任的节点无情。这样，a）可以抵抗女巫攻击，b）保护之前成功的交易关系，哪怕其中一个节点临时无法提供价值了，c）慢慢的让已经恶化的关系阻塞，直到关系逐渐恢复。</p>
+<p>###3.4.3 BitSwap Ledger<br>    BS节点会记录与其他节点的传输记录，记到一个账本里。当激活一个连接时，BS节点间会交换帐本信息。如果两方的账本不能完全匹配，那么账本会重新建立，这样已经产生的信用和债务就被抹除了。坏节点是有可能故意丢失账本的，以抹除其债务。 It is unlikely that nodes will have accrued enough debt to warrant also losing the accrued trust;但是节点可以根据自己的意愿认为这是在故意误导，从而拒绝交易。<br>    节点可以根据自身意愿决定如何保存历史账本，尽管这对整体功能的正确发挥并不是必要条件。只有当前的账本条目是有用的。节点可以自由的对账本进行垃圾回收，首先gc那些用处较小的账本：老的和小的账本。</p>
+<p>###3.4.4 BitSwap规范<br>BS节点遵循一个简单的协议。</p>
+<blockquote>
+<p>// Additional state kept<br>type BitSwap struct {<br>ledgers map[NodeId]Ledger<br>// Ledgers known to this node, inc inactive<br>active map[NodeId]Peer<br>// currently open connections to other nodes<br>need_list []Multihash<br>// checksums of blocks this node needs<br>have_list []Multihash<br>// checksums of blocks this node has<br>}</p>
+</blockquote>
+<blockquote>
+<p>type Peer struct{<br>nodeid NodeIdledger Ledger<br>// Ledger between the node and this peer<br>last_seen Timestamp<br>// timestamp of last received message<br>want_list []Multihash<br>// checksums of all blocks wanted by peer<br>// includes blocks wanted by peer’s peers<br>}</p>
+</blockquote>
+<blockquote>
+<p>// Protocol interface:<br>interface Peer {<br>open (nodeid :NodeId, ledger :Ledger);<br>send_want_list (want_list :WantList);<br>send_block (block :Block) -&gt; (complete :Bool);<br>close (final :Bool);<br>}</p>
+</blockquote>
+<p>###Peer 连接生命周期素描：<br>1）打开：peers发送账本，直到双方都同意彼此的账本。<br>2）发送：peers交换wantlists和blocks。<br>3）关闭：peers关闭连接<br>4）忽略：（特殊情况）如果一个节点的策略是避免发送，某个peer可能会被忽略一段时间。</p>
+<p>###Peer.open(NodeId, Ledger).<br>    在进行连接时，主动发起连接的节点要用一个账本来初始化连接。这个账本要么是从之前某次连接中存储下来的，要么是一个清零的新账本。然后，发送节点用这个账本来发送一个“打开请求信息”。<br>    接收者收到这个“打开请求”后，可以决定是否要激活连接。如果根据接收者的账本，发送者不是一个可信节点（transmission below zero，或者有很多外债），接收者可能会忽略请求。这个忽略动作是概率执行的，而且一旦忽略成功，会带有一段冷却时间（即一段时间内总会忽略同一个发送者的打开请求），这样，即允许了错误带来的误差情况，又避免了攻击者的持续攻击。<br>    如果决定激活一个连接，接收者用自己本地版本的账本来初始化连接，然后设置lastseen时间戳。然后它比较自己的帐本和收到的账本，如果它们精确匹配，连接打开成功。否则，建立一个新帐本，然后发送之。</p>
+<p>###Peer.send_want_list(WantList<br>    当一个连接处于打开状态时，节点会向所有已连接的其他节点广播其wantlist。这个动作发生在a）打开连接时b）在一个随机超时时间后，c）在wantlist改变后 d）在收到一个新block后。<br>    在收到一个wantlist时，节点存储之。然后它检查自己是否有这个list中任何一个block，如果有，它根据上面提到的BS策略来发送这个block。</p>
+<p>###Peer.send_block(Block）<br>    发送一个block是很直接的。发送者直接传输block的数据，接收者收到全部数据后，计算multihash校验和，看看是否和期望的一样，如果是，返回确认信息。<br>    在结束成功收到一个block的过程中，接收者把这个block从needlist放到havelist里，然后发送者和接收者都更新他们的账本以反应这次传输。<br>    如果一个传输被验证为失败，说明发送者要么没有正常工作，要么是在攻击。接收者可以自由决定是否拒绝将来的交易。注意，BS期望能够建立起可靠的传输通道，因此传输错误是希望尽早尽快捕获的，因为它可能会引起对诚实节点的错误惩罚。</p>
+<p>#Peer.close(Bool）<br>    The final parameter to close signals whether the intention to tear down the connection is the sender’s or not.如果为假，接收者可能会立刻重新打开连接，这样可以避免过早的关闭。<br>    一个连接应该在以下两种情况下被关闭：</p>
+<pre><code>- 一段时间没有收到任何数据，这个时间到达了silencewait这个超时时间所规定的长度。默认是30秒。
+- 一个节点正在退出、关闭。
+在关闭信息发出后，接收者和发送者都关闭连接，清除状态。账本可能会被保存供将来使用。
+</code></pre><p>Notes</p>
+<pre><code>- 一个不是OPEN的message如果应用于一个未激活的连接，这个信息会被忽略。
+</code></pre><p> In case of a send_block message, the receiver may check the block to see if it is needed and<br>correct, and if so, use it. Regardless, all such out-of order messages trigger a close(false) message from<br>the receiver to force re-initialization of the connection.</p>
+<p>##3.5 Object Merkle DAG<br>IPFS使用Merkle DAG。obj间的link是source中嵌套的目标的加密hash。这也是Git的数据结构标准实现。Object Merkle DAG提供IPFS以下有用属性：<br>1）基于内容的寻址：所有内容都是唯一的由其多重hash校验和决定的，包括links。<br>2）防篡改：所有内容都靠校验和来校验。如果数据被篡改或者损坏，IPFS可以发现。<br>3）重复数据删除：所有内容相同的obj都被视为是等同的，于是只被存储一次。这对于索引obj特别有用，比如git树或commit，对普通数据也是如此。<br>IPFS Object格式定义：</p>
+<blockquote>
+<p>type IPFSLink struct {<br>Name string<br>// name or alias of this link<br>Hash Multihash<br>// cryptographic hash of target<br>Size int、<br>// total size of target}</p>
+</blockquote>
+<p>type IPFSObject struct {<br>links []IPFSLink<br>// array of links<br>data []byte<br>// opaque content data}</p>
+<p>IPFS DAG是非常灵活的存储方式。只要求obj引用是a）基于内容寻址b）用上述格式编码。IPFS给应用程序对data域完全的控制；应用可以用任何格式，IPFS不一定理解这些格式。这种分离的放在obj内部的link表让IPFS能够：</p>
+<pre><code>- 列举一个obj内所有的obj引用；比如
+</code></pre><blockquote>
+<p>ipfs ls /XLZ1625Jjn7SubMDgEyeaynFuR84ginqvzb<br>XLYkgq61DYaQ8NhkcqyU7rLcnSa7dSHQ16x 189458 less<br>XLHBNmRQ5sJJrdMPuu48pzeyTtRo39tNDR5 19441 script<br>XLF4hwVHsVuZ78FZK6fozf8Jj9WEURMbCX4 5286 template</p>
+</blockquote>
+<p><object multihash=""> <object size=""> <link name=""></object></object></p>
+<pre><code>- 解析字符串类型的路径查找，比如foo/bar。给定一个obj，IPFS把路径的第一部分解析为obj的link表中的一个hash，根据这个hash拿到第二个obj，递归此过程，继续拿到下一个obj。于是，字符串路径可以游历整个DAG，无论数据格式如何。
+- 递归遍历所有的obj引用。
+
+由一个原始数据域和通用的link组成的结构，使得IPFS可以构建出任意的数据机构。用DAG除了能构建出Git的数据模型，也考虑其他可能的数据结构：a）kv对；b）传统的关系数据库c）Linked Data triple stores (d)linked document publishing systems (e) linked communications platforms (f) cryptocurrency blockchains.这些都可以基于IUPFS DAG构建，从而让更复杂的应用使用IPFS作为传输协议。
+</code></pre><p>##3.5.1 路径<br>IPFS objs可以通过一个字符串路径行程的API来遍历。这个路径就和传统的unix系统或者web url一样。DAG link让这种遍历很简单。所有的全路径都是这种形式：</p>
+<blockquote>
+<p>// format<br>/ipfs/<hash-of-object>/<name-path-to-object><br>// example<br>/ipfs/XLYkgq61DYaQ8NhkcqyU7rLcnSa7dSHQ16x/foo.txt</name-path-to-object></hash-of-object></p>
+</blockquote>
+<p>/ipfs前缀可以使得这种路径无缝的mount进现有系统。路径的第二部分则是obj的hash，因为不存在一个全局root。全局root会是一个不可能的任务，因此，我们用基于内容的地址来模拟root。所有的obj都可以通过它们的hash来访问。这意味着给定三个obj：<foo>/bar/baz，最后一个obj能被以下多种方式访问：<br>/ipfs/<hash-of-foo>/bar/baz<br>/ipfs/<hash-of-bar>/baz<br>/ipfs/&lt;hash-of-baz</hash-of-bar></hash-of-foo></foo></p>
+<p>###3.5.2 本地Objs<br>IPFS进行本地存储，这是一个用来存取IPFS所管理的obj的原始信息的外部系统。存储的形式取决于节点的情况。大多数情况下，它就是一块磁盘空间（要么是直接地文件系统，要么是kv存储比如leveldb，或者直接由IPFS客户端控制）。其他时候，比如非持久化缓存，存储就是一块内存。<br>最终所有可用的block都是某个节点的本地存储。当用户请求objs的时候，这些block可以被找到，下载，存储在本地，至少是临时存储在本地。这使得在一段时间后可以快速的从本地找到数据（时间可配置）。</p>
+<p>###3.5.3 Obj Pinning<br>如果一个节点希望保证某个特定的obj存在，它可以钉住这个obj。这使得这个obj持续存在于节点的本地存储。Pinning可以递归执行，钉住某个obj关联的所有obj。这在保存文件时非常有用。这还使得IPFS行程一个永久的web，objs可以保证它们指向的其他objs的存活。</p>
+<p>###3.5.4 发布Objs<br>IPFS是全局分布式的。它被设计为允许让上百万用户的文件同时存在。带有基于内容寻址的DHT可以用公平、安全、完全分布式的方式发布objs。任何人都可以通过简单的在DHT离增加key、把自己作为一个peer启动、给他用户这个obj的path来发布一个obj。注意obj是从根本上不可变的，和git一样。新的版本hash会不同，于是就是一个新的obj了。跟踪版本号是另外的专门objs的职责。</p>
+<p>###3.5.5 Obj级别加密<br>IPFS可以执行obj级别的加密。一个加密或者签名的obj可以被放入特殊的一帧，从而允许对原始bytes加密或者签名。</p>
+<blockquote>
+<p>type EncryptedObject struct {<br>Object []bytes<br>// raw object data encrypted<br>Tag []bytes<br>// optional tag for encryption groups<br>}<br>type SignedObject struct {<br>Object []bytes<br>// raw object data signed<br>Signature []bytes<br>// hmac signature<br>PublicKey []multihash<br>// multihash identifying key<br>}</p>
+</blockquote>
+<p>加密动作改变了obj的hash，从而把它变成一个新的obj。IPFS自动校验签名，并用用户指定的keychain解密。加密obj的link也被保护起来，没有key是无法进行遍历的。允许父物体用一个key加密，子物体用另外的key加密或者干脆不加密。这使得指向共享obj的link安全。</p>
+<p>#3.6 文件<br>IPFS还基于DAG定义出一系列obj来构建出一个带版本控制的文件系统。这个obj模型类似于git的：<br>1）block：不同大小的数据组成的block<br>2）list：由一系列blocks或者其他lists组成<br>3）tree：一系列的blocks，lists或者其他trees<br>4）commit：一棵树的某个版本历史的快照。<br>我开始希望完全使用git的obj格式，但是不得不多引入一些分布式系统中有用的特性，包括a）快速大小查询（有多少字节被加入某个obj）b）大文件里的重复数据删除（比如在增加一个list时）c）把commits嵌入trees。不过，IPFS文件系统和git文件系统非常类似，两者进行转换是可能的。Git obj可以无损的转换成IPFS格式。<br>注意：下文的文件格式使用JSON。但实际上使用protobuf的二进制格式编码的，尽管ipfs可以导入导出JSON。</p>
+<p>##3.6.1 File Object：blob<br>Blob obj里是可被寻址的数据单元，表示一个文件。IPFS blocks类似于git blob或者文件系统数据block。它们存储用户数据。注意，IPFS文件既可以被lists表示又可以被blob表示。blobs里没有link。<br>{“data”: “some data here”,// blobs have no link}</p>
+<p>##3.6.2 File Object: list<br>List boject大表很大的或者去重复数据的文件，由好结果IPFS blobs拼接而成。IPFS list有点像由间接blocks组成的文件系统文件。因为lists可以包含其他lists，类似于链式lists和平衡树都是可以构造出来的。同一个节点现在很多地方的有向图则允许文件内的重复数据删除。当然，环是不允许的，这是由hash寻址决定的。</p>
+<blockquote>
+<p>{“data”: [“blob”, “list”, “blob”],<br>// lists have an array of object types as data<br>“links”: [{ “hash”: “XLYkgq61DYaQ8NhkcqyU7rLcnSa7dSHQ16x”,”size”: 189458 },{ “hash”: “XLHBNmRQ5sJJrdMPuu48pzeyTtRo39tNDR5”,”size”: 19441 },{ “hash”: “XLWVQDqxo9Km9zLyquoC9gAP8CL1gWnHZ7z”,”size”: 5286 }<br>// lists have no names in links<br>]<br>}</p>
+</blockquote>
+<p>###3.6.3  File Object: tree<br>IPFS里的tree和git里的类似：代表一个目录，一个名字到hash的映射。hash引用的是blobs，lists，其他trees，或者commits。主义传统的路径命名已经由DAG实现了。</p>
+<p>###3.6.4 File Object: commit<br>IPFS里的commit obj代表任何obj的某个历史版本快照。和git的类似，但是可以指向任何类型的obj。</p>
+<p>###3.6.5 Version control<br>Commit obj表示一个obj版本历史中某个特殊的快照。只要某个commit和它所有的children能被访问，那么所有历史以及文件变更就都能访问。这超出了Merkle DAG模型。</p>
+<p>###3.6.6 Filesystem Paths<br>IPFS objs可以通过string path API来遍历。IPFS file obj被设计来让IPFS系统更好的mount进unix类系统。限制trees不能有数据，这样可以表示目录。commits可以被表示为目录，或者干脆隐藏。</p>
+<p>###3.6.7 Splitting Files into Lists and Blob<br>给分布式大文件做版本管理的一个主要挑战就是找到正确的方法来把它们分割为独立的blocks。IPFS提供多种办法：<br>a）LBFS中的Rabin Fingerprints<br>b） rolling-checksum algorithm<br>c）让用户自己定义</p>
+<p>###3.6.8 Path Lookup Performance<br>优化途径：</p>
+<pre><code>- 树缓存
+- 扁平树
+</code></pre><p>##3.7 IPNS：命名与可变状态<br>    有一个关键的地方之前没提：可变的命名。缺了这个，所有的新内容的发布和交流只能通过互相发送IPFS link的方式，无法通过IPFS自己来完成。需要用路径的方式来获取可变的状态。<br>如果可变的数据是需要的，为什么我们要花大力气来构建不可变的merkle DAG？考虑下基于merkle DAG所实现的IPFS所能提供的属性：objects a）能够通过hash获取，b）完整性检查，c）互相关联，d）无限缓存。换言之：<br>    Objects是永久的。<br>    这是高性能分布式系统所需要的关键属性。基于内容的寻址可以靠以下特性构建网络：a）巨大的带宽优化；b）untrusted content serving c）永久链接 d）创建objects及其refs的永久备份。<br>    Merkle DAG+不可变的、基于内容寻址的objs和可以命名的、指向DAG的可变指针，这两者构成了许多成功分布式系统中的两个方面。</p>
+<p>###3.7.1 自验证的名字<br>    SFS提供了一种名字范式来构建自验证的名字，这种名字位于加密过的全局名字空间，且是可变的。IPFS的范式如下：<br>1）回忆IPFS中：<br>NodeId = hash(node.PubKey）<br>2）给每个用户都指派一个可变的名字空间：<br>/ipns/<nodeid><br>3)用户可以发布一个Object到这个路径，并用他的私钥签名：<br>/ipns/XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm/<br>4）当其他用户要获取这个obj，他们可以检查签名是否匹配公钥及NodeId。这就验证了发布这个obj的user的真实性，并实现了可变状态。<br>注意这些细节：</nodeid></p>
+<pre><code>- ipns这个前缀用于区分可变和不可变路径，无论是对程序还是人类。
+- 因为ipns不是基于内容寻址的，因此发布ipns路径需要依赖INFS中唯一的可变分布式状态系统：路由系统。流程是：1）发布一个出昂贵的不可变的IPFS Obj，2）把这个obj的hash发布到路由系统里，用以下的metadata：
+</code></pre><blockquote>
+<p>routing.setValue(NodeId, <ns-object-hash>)</ns-object-hash></p>
+</blockquote>
+<pre><code>- obj中任何link都可以在名字空间里以子名字的形式存在：
+</code></pre><blockquote>
+<p>/ipns/XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm/<br>/ipns/XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm/docs/<br>ipns/XLF2ipQ4jD3UdeX5xp1KBgeHRhemUtaA8Vm/docs/ipfs</p>
+<pre><code>- 建议：最好是通过ipns发布commit obj，或者其他带有版本历史的obj，这样客户端能找到旧的名字，给用户提供额外的选项。
+</code></pre></blockquote>
+<p>3.7.2 用户友好的名字<br>IPFS实际上是指定和重指定名字的方式，并不太用户友好，因为它使用很长的hash作为名字，无法记忆。它们可以被作为URL使用，但不适合线下传递。所以，使用以下手段来加强ipns的用户易用度。</p>
+<p>Peer Links<br>受SFS启发，用户可以直接把其他用户的obj连进他们自己的objs，比如名字空间里。这也有助于建立网络间的互信（而且由原有的认证模型加强这一点）：</p>
+<blockquote>
+<p>Alice links to bob Bob<br>ipfs link /<alice-pk-hash>/friends/bob /<bob-pk-hash><br>// Eve links to Alice<br>ipfs link /&lt;eve-pk-hash/friends/alice /<alice-pk-hash><br>// Eve also has access to Bob/&lt;eve-pk-hash/friends/alice/friends/bob<br>// access Verisign certified domains<br>/<verisign-pk-hash>/foo.com</verisign-pk-hash></alice-pk-hash></bob-pk-hash></alice-pk-hash></p>
+</blockquote>
+<p>DNS TXT IPNS Records<br>如果/ipns/<domain>是个合法的域名，IPFS寻找key ipns和它的dns txt records。IPFS把值解释为要么是一个obj的hash，要么是另一个ipns path：</domain></p>
+<blockquote>
+<p>this DNS TXT record<br>ipfs.benet.ai. TXT “ipfs=XLF2ipQ4jD3U …”<br> behaves as symlink<br>ln -s /ipns/XLF2ipQ4jD3U /ipns/fs.benet.</p>
+</blockquote>
+<p>Proquint Pronounceable Identifier<br>可以使用助记词：</p>
+<blockquote>
+<p>this proquint phrase<br>/ipns/dahih-dolij-sozuk-vosah-luvar-fuluh<br> will resolve to corresponding<br>/ipns/KhAwNprxYVxKqp</p>
+</blockquote>
+<p>短名字服务。</p>
+<p>##3.8 使用 IPFS<br>以下是我将追寻将IPFS投入应用的一些场景：<br>1）作为挂载为全局的文件系统，前缀为/ipfs和/ipns<br>2）作为挂载给个人的自动的同步、版本管理、备份工具<br>3）作为加密的文件分享系统<br>4）作为所有软件的版本包管理系统<br>5）作为虚机的根文件系统<br>6）作为虚机的boot文件系统<br>7）作为数据库<br>8）作为通信平台<br>9）作为统一的大文件CDN<br>10）作为加密的CDN<br>11）作为网页的CDN<br>12）作为新时代永不消亡的互联网<br>IPFS要实现的目标：<br>a）作为IPFS库，被你自己的应用程序所使用<br>b）直接操纵objs的命令行工具<br>c）挂载的文件系统</p>
+<p>#4未来<br>    IPFS背后的理念是几十年来在学术界和开源领域成功实施的分布式系统研究的产物。 IPFS综合了迄今为止最成功的系统中的许多最佳创意。 除了BitSwap，这是一种新型的协议，IPFS的主要贡献是系统的这种耦合和设计的综合。IPFS是一种新型分散式Internet基础设施的雄心勃勃的设想，可以构建各种不同的应用。 它至少可以用作全局，挂载，版本化的文件系统和命名空间，或者是下一代文件共享系统。 在最好的情况下，它可以把互联网推向新纪元，发布有价值的信息将不再一定需要一个发布者，而是可以由对这个信息感兴趣的人来完成。用户可以在不用信任peer的情况下，可信的获取信息，老的但是重要文件将不再会消失不见。IPFS希望能带领我们向永久的互联网发展。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2018/06/13/IPFS/" data-id="cjicgvssd00006mjxrhmn5gmi" class="article-share-link">Share</a>
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+  
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">June 2018</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2018/06/13/IPFS/">(no title)</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2018 John Doe<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
